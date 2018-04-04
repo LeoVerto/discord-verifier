@@ -31,11 +31,10 @@ async def on_ready():
 @client.event
 async def on_message(message):
     author = message.author
-    name = await get_disc_name(author)
+    name = get_disc_name(author)
 
     if message.channel.id == config.VERIFICATION_CHANNEL and message.content.startswith("!verify"):
         logging.info("Verify started by {}".format(name))
-
         arguments = message.content.split(" ")
 
         if len(arguments) < 2:
@@ -73,10 +72,10 @@ async def on_message(message):
 
 
 async def answer(message, content):
-    client.send_message(message.channel, "{} {}".format(message.author.mention, content))
+    await client.send_message(message.channel, "{} {}".format(message.author.mention, content))
 
 
-async def get_disc_name(user):
+def get_disc_name(user):
     return "{}#{}".format(user.name, user.discriminator)
 
 
