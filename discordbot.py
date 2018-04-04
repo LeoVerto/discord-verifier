@@ -31,7 +31,7 @@ async def on_ready():
 @client.event
 async def on_message(message):
     author = message.author
-    name = get_disc_name(author)
+    name = await get_disc_name(author)
 
     if message.channel.id == config.VERIFICATION_CHANNEL and message.content.startswith("!verify"):
         logging.info("Verify started by {}".format(name))
@@ -64,16 +64,19 @@ async def on_message(message):
         if comment_body == name:
             # TODO: betrayal check
             logging.warning("Verified reddit user {}, discord ID {}".format("empty", name))
+            await answer(message, "you have been successfully verified!")
         else:
             logging.info("Comment {} does not contain discord ID".format(comment))
-            await answer(message, "the comment does not contain your discord ID!")
+            await answer(message, "that comment does not contain your discord ID!")
+
+    return
 
 
 async def answer(message, content):
     client.send_message(message.channel, "{} {}".format(message.author.mention, content))
 
 
-def get_disc_name(user):
+async def get_disc_name(user):
     return "{}#{}".format(user.name, user.discriminator)
 
 
