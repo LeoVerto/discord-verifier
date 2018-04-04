@@ -65,7 +65,7 @@ async def on_message(message):
             reddit_name = comment.author.name
             # TODO: betrayal check
             client.change_nickname(author, "/u/{}".format(reddit_name))
-            client.add_role(author, config.VERIFIED_ROLE)
+            client.add_roles(author, config.VERIFIED_ROLE)
             logging.warning("Verified reddit user {}, discord ID {}".format(reddit_name, name))
             await answer(message, "you have been successfully verified!")
         else:
