@@ -5,7 +5,7 @@ import prawcore
 SAFE_REDDITOR = 'rodly'         # Owner of the reddit admins circle
 
 def get_circle_post(reddit, redditor, subreddit, double_check=True):
-    url = '/user/%s/circle' % (redditor.name)
+    url = '/user/%s/circle' % (redditor.name,)
     try:
         reddit.get(url)
     except prawcore.exceptions.Redirect as exc:
@@ -65,7 +65,7 @@ def _test():
     usernames = sys.argv[1:] if len(sys.argv) > 1 else ('Leo_Verto', 'orbilo')
     for username in usernames:
         user = reddit.redditor(username)
-        print user, check_betrayal(reddit, user, subreddit)
+        print(user, check_betrayal(reddit, user, subreddit))
 
 if __name__ == '__main__':
     _test()
