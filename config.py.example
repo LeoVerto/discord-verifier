@@ -1,5 +1,6 @@
 DISCORD_TOKEN = ""
 VERIFICATION_CHANNEL = "430740118047817751"
+LOGGING_CHANNEL = "431126628681252866"
 VERIFIED_ROLE = "Verified T17"
 POST_URL = "https://www.reddit.com/r/ccKufiPrFaShleWoli0/comments/89etq9/circle_of_trust_warplanning_discord/"
 REDDIT_ID = ""

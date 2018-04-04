@@ -48,11 +48,11 @@ async def on_message(message):
     name = get_disc_name(author)
 
     if message.channel.id == config.VERIFICATION_CHANNEL and message.content.startswith("!verify"):
-        logging.info("Verify started by {}".format(name))
+        logging.debug("Verify started by {}".format(name))
         arguments = message.content.split(" ")
 
         if len(arguments) < 2:
-            logging.info("No URL from {}".format(name))
+            log("No URL from {}".format(name))
             await answer(message, "Please include the comment URL!")
             return
 
@@ -60,18 +60,18 @@ async def on_message(message):
         url = url_fix(raw_url)
 
         if not url.startswith(config.POST_URL):
-            logging.info("Invalid URL from {}".format(name))
+            log("Invalid URL from {}".format(name))
             await answer(message, "Invalid URL!")
             return
 
         comment_id = Comment.id_from_url(url)
-        logging.info("Reading comment {}".format(comment_id))
+        logging.debug("Reading comment {}".format(comment_id))
 
         comment = get_comment(comment_id)
         comment_body = comment.body
 
         if comment_body is None:
-            logging.info("Comment {} does not exist".format(comment_id))
+            log("Comment {} does not exist".format(comment_id))
             await answer(message, "that comment does not exist!")
             return
 
@@ -83,18 +83,16 @@ async def on_message(message):
             members, joined, betrayed = analyze_circle_flair(reddit, reddit_user, cot)
 
             if betrayed:
-                logging.warning("Denied user {}, they have betrayed {} times!".format(reddit_name, joined))
+                log("Denied discord user {} (reddit {}), they have betrayed!".format(name, reddit_name))
                 await answer(message, "you have betrayed {} times! Please wait for manual verification.".format(joined))
                 return
 
-            logging.info("User {} is a member of {} circles".format(reddit_name, joined))
-
             await client.change_nickname(author, "/u/{}".format(reddit_name))
             await client.add_roles(author, verified_role)
-            logging.warning("Verified reddit user {}, discord ID {}".format(reddit_name, name))
+            log("Verified {}, member of {} circles".format(name, joined))
             await answer(message, "you have been successfully verified!")
         else:
-            logging.info("Comment {} does not contain discord ID".format(comment_id))
+            log("Comment does not just contain discord ID: {}".format(url))
             await answer(message, "that comment does not contain your discord ID!")
 
     return
@@ -102,6 +100,11 @@ async def on_message(message):
 
 async def answer(message, content):
     await client.send_message(message.channel, "{} {}".format(message.author.mention, content))
+
+
+async def log(message):
+    logging.info(message)
+    await client.send_message(config.LOGGING_CHANNEL, message)
 
 
 def get_disc_name(user):
