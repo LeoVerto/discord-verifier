@@ -50,22 +50,26 @@ async def on_message(message):
             await answer(message, "Invalid URL!")
             return
 
-        comment = Comment.id_from_url(url)
-        logging.info("Reading comment {}".format(comment))
+        comment_id = Comment.id_from_url(url)
+        logging.info("Reading comment {}".format(comment_id))
 
-        comment_body = get_comment(comment)
+        comment = get_comment(comment_id)
+        comment_body = comment.body
 
         if comment_body is None:
-            logging.info("Comment {} does not exist".format(comment))
+            logging.info("Comment {} does not exist".format(comment_id))
             await answer(message, "that comment does not exist!")
             return
 
         if comment_body == name:
+            reddit_name = comment.author.name
             # TODO: betrayal check
-            logging.warning("Verified reddit user {}, discord ID {}".format("empty", name))
+            client.change_nickname(author, "/u/{}".format(reddit_name))
+            client.add_role(author, config.VERIFIED_ROLE)
+            logging.warning("Verified reddit user {}, discord ID {}".format(reddit_name, name))
             await answer(message, "you have been successfully verified!")
         else:
-            logging.info("Comment {} does not contain discord ID".format(comment))
+            logging.info("Comment {} does not contain discord ID".format(comment_id))
             await answer(message, "that comment does not contain your discord ID!")
 
     return
@@ -85,7 +89,7 @@ def get_comment(id):
         for comment in post.comments:
             logging.debug(comment.id)
             if comment.id == id:
-                return comment.body
+                return comment
         return None
     except (ResponseException, Forbidden, OAuthException) as e:
         logging.error(e)
