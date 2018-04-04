@@ -100,7 +100,7 @@ async def on_message(message):
             await answer(message, "you have been successfully verified!")
         else:
             await log("Comment does not just contain discord ID: {}".format(url))
-            await answer(message, "that comment does not contain your discord ID!")
+            await answer(message, "that comment does not just contain your discord ID!")
 
     return
 
