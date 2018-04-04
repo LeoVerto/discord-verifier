@@ -23,11 +23,23 @@ post = reddit.submission(url=config.POST_URL)
 cot = reddit.subreddit("CircleofTrust")
 
 client = discord.Client()
+verified_role = None
 
 
 @client.event
 async def on_ready():
+    global verified_role
+
     logging.info("Logged in as: {}, ID: {}".format(client.user.name, client.user.id))
+
+    for server in client.servers:
+        for role in server.roles:
+            if role.name == config.VERIFIED_ROLE:
+                verified_role = role
+                break
+
+    if not verified_role:
+        logging.error("Could not find verified role {}!".format(config.VERIFIED_ROLE))
 
 
 @client.event
@@ -77,8 +89,8 @@ async def on_message(message):
 
             logging.info("User {} is a member of {} circles".format(reddit_name, joined))
 
-            client.change_nickname(author, "/u/{}".format(reddit_name))
-            client.add_roles(author, config.VERIFIED_ROLE)
+            await client.change_nickname(author, "/u/{}".format(reddit_name))
+            await client.add_roles(author, verified_role)
             logging.warning("Verified reddit user {}, discord ID {}".format(reddit_name, name))
             await answer(message, "you have been successfully verified!")
         else:
