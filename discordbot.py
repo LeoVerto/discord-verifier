@@ -9,7 +9,7 @@ from prawcore.exceptions import ResponseException, Forbidden, OAuthException
 import asyncio
 import config
 from werkzeug.urls import url_fix
-from circleoftrust import check_betrayal
+from circleoftrust import analyze_circle_flair
 
 logging.basicConfig(level=logging.INFO)
 
@@ -68,7 +68,7 @@ async def on_message(message):
             reddit_name = reddit_user.name
 
             # Check CoT submissions
-            members, joined, betrayed = check_betrayal(reddit, cot, reddit_user)
+            members, joined, betrayed = analyze_circle_flair(reddit, reddit_user, cot)
 
             if betrayed:
                 logging.warning("Denied user {}, they have betrayed {} times!".format(reddit_name, joined))
