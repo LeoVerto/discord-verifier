@@ -9,6 +9,7 @@ from prawcore.exceptions import ResponseException, Forbidden, OAuthException
 import asyncio
 import config
 from werkzeug.urls import url_fix
+from circleoftrust import check_betrayal
 
 logging.basicConfig(level=logging.INFO)
 
@@ -19,6 +20,7 @@ reddit = praw.Reddit(user_agent="ccKufi Discord Verifier (by /u/Leo_Verto)",
                      )
 logging.info("Logged into reddit as {}".format(reddit.user.me()))
 post = reddit.submission(url=config.POST_URL)
+cot = reddit.subreddit("CircleofTrust")
 
 client = discord.Client()
 
@@ -62,8 +64,19 @@ async def on_message(message):
             return
 
         if comment_body == name:
-            reddit_name = comment.author.name
-            # TODO: betrayal check
+            reddit_user = comment.author
+            reddit_name = reddit_user.name
+
+            # Check CoT submissions
+            members, joined, betrayed = check_betrayal(reddit, cot, reddit_user)
+
+            if betrayed:
+                logging.warning("Denied user {}, they have betrayed {} times!".format(reddit_name, joined))
+                await answer(message, "you have betrayed {} times! Please wait for manual verification.".format(joined))
+                return
+
+            logging.info("User {} is a member of {} circles".format(reddit_name, joined))
+
             client.change_nickname(author, "/u/{}".format(reddit_name))
             client.add_roles(author, config.VERIFIED_ROLE)
             logging.warning("Verified reddit user {}, discord ID {}".format(reddit_name, name))
