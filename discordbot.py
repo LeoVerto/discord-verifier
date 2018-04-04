@@ -58,7 +58,7 @@ async def on_message(message):
         arguments = message.content.split(" ")
 
         if len(arguments) < 2:
-            await log("No URL from {}".format(name))
+            await log("No URL from %user%", author)
             await answer(message, "Please include the comment URL!")
             return
 
@@ -66,7 +66,7 @@ async def on_message(message):
         url = url_fix(raw_url)
 
         if not url.startswith(config.POST_URL):
-            await log("Invalid URL from {}".format(name))
+            await log("Invalid URL from %user%", author)
             await answer(message, "Invalid URL!")
             return
 
@@ -76,7 +76,7 @@ async def on_message(message):
         comment = get_comment(comment_id)
 
         if comment is None:
-            await log("User {} linked comment {} which does not exist".format(name, comment_id))
+            await log("User %user% linked comment {} which does not exist".format(comment_id), author)
             await answer(message, "that comment does not exist!")
             return
 
@@ -90,13 +90,13 @@ async def on_message(message):
             members, joined, betrayed = analyze_circle_flair(reddit, reddit_user, cot)
 
             if betrayed:
-                await log("Denied discord user {} (reddit {}), they have betrayed!".format(name, reddit_name))
+                await log("Denied discord user %user% (reddit {}), they have betrayed!".format(reddit_name), author)
                 await answer(message, "you have betrayed {} times! Please wait for manual verification.".format(joined))
                 return
 
             await client.change_nickname(author, "/u/{}".format(reddit_name))
             await client.add_roles(author, verified_role)
-            await log("Verified {}, member of {} circles".format(name, joined))
+            await log("Verified %user%, member of {} circles".format(joined), author)
             await answer(message, "you have been successfully verified!")
         else:
             await log("Comment does not just contain discord ID: {}".format(url))
@@ -109,9 +109,16 @@ async def answer(message, content):
     await client.send_message(message.channel, "{} {}".format(message.author.mention, content))
 
 
-async def log(message):
-    logging.info(message)
-    await client.send_message(logging_channel, message)
+async def log(message, user=None):
+    if user:
+        log_msg = message.replace("%user%", get_disc_name(user))
+        discord_msg = message.replace("%user%", user.mention)
+    else:
+        log_msg = message
+        discord_msg = message
+
+    logging.info(log_msg)
+    await client.send_message(logging_channel, discord_msg)
 
 
 def get_disc_name(user):
