@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import praw
-import prawcore
+from prawcore.exceptions import Redirect, NotFound
 
 SAFE_REDDITOR = 'rodly'         # Owner of the reddit admins circle
 
@@ -9,12 +9,12 @@ def get_circle_post(reddit, redditor, subreddit, double_check=True):
     url = '/user/%s/circle' % (redditor.name,)
     try:
         reddit.get(url)
-    except prawcore.exceptions.Redirect as exc:
+    except Redirect as exc:
         post = praw.models.Submission(reddit,
                                       url=exc.response.headers['Location'])
         assert post.subreddit == subreddit
         return post
-    except prawcore.exceptions.NotFound as exc:
+    except NotFound as exc:
         # Confirm that circles haven't been taken offline by checking
         # that a known participating user is resolving (be careful to
         # only recurse one level)
@@ -26,12 +26,17 @@ def get_circle_post(reddit, redditor, subreddit, double_check=True):
 
 
 def get_circle_comment(reddit, redditor, subreddit, limit=100):
-    for comment in redditor.comments.new(limit=limit):
-        if comment.subreddit != subreddit:
-            continue
-        return comment
-    else:
-        return None
+    try:
+        comments = redditor.comments.new(limit=limit)
+
+        if comments:
+            for comment in comments:
+                if comment.subreddit == subreddit:
+                    return comment
+    except NotFound:
+        pass
+
+    return None
 
 
 def get_circle_flair(reddit, redditor, subreddit):
@@ -48,7 +53,7 @@ def analyze_circle_flair(reddit, redditor, subreddit):
     if flair:
         return analyze_flair(flair)
 
-    return None
+    return None, None, None
 
 
 # https://github.com/albertwujj/CircleOfTrust/blob/master/GetCircles.py
