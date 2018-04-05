@@ -14,6 +14,8 @@ from circleoftrust import analyze_circle_flair
 
 logging.basicConfig(level=logging.INFO)
 
+reddit_blacklist = config.REDDIT_BLACKLIST.split(", ")
+discord_blacklist = config.DISCORD_BLACKLIST.split(", ")
 
 reddit = praw.Reddit(user_agent="ccKufi Discord Verifier (by /u/Leo_Verto)",
                      client_id=config.REDDIT_ID, client_secret=config.REDDIT_SECRET,
@@ -51,6 +53,7 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
+    server = message.server
     author = message.author
     name = get_disc_name(author)
 
@@ -61,6 +64,11 @@ async def on_message(message):
         if len(arguments) < 2:
             await log("No URL from %user%", author)
             await answer(message, "Usage: !verify <cckufi comment url>")
+            return
+
+        if name in discord_blacklist:
+            await log("Blacklisted discord user %user% just tried to register!", author)
+            await answer(message, "Invalid URL!")
             return
 
         raw_url = arguments[1]
@@ -81,11 +89,17 @@ async def on_message(message):
             await answer(message, "that comment does not exist!")
             return
 
+        reddit_user = comment.author
+        reddit_name = reddit_user.name
+
+        if reddit_name in reddit_blacklist:
+            await log("Blacklisted reddit user {} (discord %user%) just tried to register!".format(reddit_name), author)
+            await answer(message, "that comment does not just contain your discord ID!")
+            return
+
         comment_body = comment.body
 
         if comment_body == name:
-            reddit_user = comment.author
-            reddit_name = reddit_user.name
 
             # Check CoT submissions
             members, joined, betrayed = analyze_circle_flair(reddit, reddit_user, cot)
@@ -117,7 +131,23 @@ async def on_message(message):
             await answer(message, "Usage !circles <reddit user>")
             return
 
-        reddit_name = re.sub(r"(@?/u/)", "", arguments[1])
+        logging.info(arguments[1])
+
+        reddit_name = arguments[1]
+
+        # Check for discord mentions
+        discord_id = re.search(r"<@!(\d{17})>", arguments[1])
+
+        logging.info(discord_id.group(1))
+
+        if discord_id:
+            discord_user = server.get_member(discord_id.group(1))
+            logging.info(discord_user)
+            if discord_user:
+                reddit_name = discord_user.name
+                logging.info(reddit_name)
+
+        reddit_name = re.sub(r"(@?/?u/)", "", reddit_name)
         reddit_user = Redditor(reddit, name=reddit_name)
 
         members, joined, betrayed = analyze_circle_flair(reddit, reddit_user, cot)
