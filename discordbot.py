@@ -99,7 +99,7 @@ async def on_message(message):
 
         comment_body = comment.body
 
-        if comment_body == name:
+        if comment_body.startswith(name):
 
             # Check CoT submissions
             members, joined, betrayed = analyze_circle_flair(reddit, reddit_user, cot)
@@ -119,8 +119,8 @@ async def on_message(message):
             await log("Verified %user%, member of {} circles".format(joined), author)
             await answer(message, "you have been successfully verified!")
         else:
-            await log("Comment does not just contain discord ID: {}".format(url))
-            await answer(message, "that comment does not just contain your discord ID!")
+            await log("Comment does not start with their discord ID: {}, got '{}' instead.".format(url, comment_body))
+            await answer(message, "that comment does not start with your discord ID!")
 
     elif message.content.startswith("!flair"):
         logging.debug("Circle command ran by {}".format(name))
@@ -137,8 +137,6 @@ async def on_message(message):
 
         # Check for discord mentions
         discord_id = re.search(r"<@!(\d{17})>", arguments[1])
-
-        logging.info(discord_id.group(1))
 
         if discord_id:
             discord_user = server.get_member(discord_id.group(1))
